@@ -11,6 +11,8 @@ class TicketOption extends Model
 
     protected $guarded = [];
 
+    protected $hidden = ['cost'];
+
     protected function casts(): array
     {
         return [
