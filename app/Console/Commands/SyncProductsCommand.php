@@ -110,7 +110,8 @@ class SyncProductsCommand extends Command
                         'product_id' => $product['id'],
                         'ticket_category' => $option['ticket_category'],
                         'name' => $option['name'],
-                        'price' => $option['price'],
+                        'cost' => $option['price'],
+                        'price' => ceil($option['price'] * 1.15 / 5) * 5,
                         'available' => $option['available'],
                         'max_purchase_qty' => $option['max_purchase_qty'],
                         'delivery_methods' => json_encode($option['delivery_methods'] ?? null),
@@ -123,7 +124,7 @@ class SyncProductsCommand extends Command
                     TicketOption::upsert(
                         $rows,
                         ['id'],
-                        ['product_id', 'ticket_category', 'name', 'price', 'available', 'max_purchase_qty', 'delivery_methods'],
+                        ['product_id', 'ticket_category', 'name', 'cost', 'price', 'available', 'max_purchase_qty', 'delivery_methods'],
                     );
                 }
             }
