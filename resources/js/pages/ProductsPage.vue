@@ -28,6 +28,14 @@
                         class="w-full rounded-lg border border-zinc-700 bg-zinc-900 py-2 pl-10 pr-4 text-sm text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     />
                 </div>
+                <label class="hidden sm:flex items-center gap-2 whitespace-nowrap text-sm text-zinc-400 cursor-pointer select-none">
+                    <input
+                        v-model="showUnavailable"
+                        type="checkbox"
+                        class="rounded border-zinc-600 bg-zinc-800 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+                    />
+                    Show unavailable
+                </label>
             </div>
         </div>
 
@@ -73,29 +81,41 @@
                             <table class="w-full text-sm text-left">
                                 <thead class="border-b border-zinc-800 bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
                                     <tr>
-                                        <th class="px-4 py-3 font-medium">ID</th>
-                                        <th class="px-4 py-3 font-medium">Date</th>
+                                        <th class="px-4 py-3 font-medium hidden sm:table-cell">ID</th>
+                                        <th class="px-4 py-3 font-medium hidden sm:table-cell">Date</th>
                                         <th class="px-4 py-3 font-medium">Match</th>
                                         <th class="px-4 py-3 font-medium hidden sm:table-cell">Competition</th>
+                                        <th class="px-4 py-3 font-medium text-right">Price</th>
+                                        <th class="px-4 py-3 font-medium text-right">Tickets</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-zinc-800/50">
                                     <tr
                                         v-for="product in products"
                                         :key="product.id"
-                                        class="bg-zinc-950 transition hover:bg-zinc-900"
+                                        @click="router.push({ name: 'product', params: { id: product.id }, query: route.query })"
+                                        class="cursor-pointer bg-zinc-950 transition hover:bg-zinc-900"
                                     >
-                                        <td class="whitespace-nowrap px-4 py-3 text-zinc-500">
+                                        <td class="whitespace-nowrap px-4 py-3 text-zinc-500 hidden sm:table-cell">
                                             {{ product.id }}
                                         </td>
-                                        <td class="whitespace-nowrap px-4 py-3 text-zinc-400">
+                                        <td class="whitespace-nowrap px-4 py-3 text-zinc-400 hidden sm:table-cell">
                                             {{ formatDate(product.starts_at) }}
                                         </td>
                                         <td class="px-4 py-3 font-medium text-zinc-100">
                                             {{ matchName(product) }}
+                                            <div class="mt-0.5 text-xs font-normal text-zinc-500 sm:hidden">
+                                                {{ formatDateShort(product.starts_at) }}
+                                            </div>
                                         </td>
                                         <td class="whitespace-nowrap px-4 py-3 text-zinc-400 hidden sm:table-cell">
                                             {{ product.competition?.name }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-right text-zinc-400">
+                                            {{ priceRange(product) }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-right text-zinc-400">
+                                            {{ product.ticket_options_count }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -138,6 +158,14 @@
                             @update:filters="updateFilters"
                             @clear="clearFilters"
                         />
+                        <label class="mt-4 flex items-center gap-2 text-sm text-zinc-400 cursor-pointer select-none">
+                            <input
+                                v-model="showUnavailable"
+                                type="checkbox"
+                                class="rounded border-zinc-600 bg-zinc-800 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+                            />
+                            Show unavailable
+                        </label>
                     </div>
                 </div>
             </Transition>
@@ -175,9 +203,22 @@ const filters = reactive({
 
 const defaultFilters = ref(null);
 const searchInput = ref('');
+const showUnavailable = ref(false);
 let searchTimeout = null;
 
 const hasMore = computed(() => products.value.length < total.value);
+
+function formatCurrency(value) {
+    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(value);
+}
+
+function priceRange(product) {
+    const min = product.ticket_options_min_price;
+    const max = product.ticket_options_max_price;
+    if (min == null) return '-';
+    if (min === max) return formatCurrency(min);
+    return `${formatCurrency(min)} - ${formatCurrency(max)}`;
+}
 
 function matchName(product) {
     if (product.home_team && product.away_team) {
@@ -199,6 +240,17 @@ function formatDate(dateStr) {
     });
 }
 
+function formatDateShort(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
 const activeFilterCount = computed(() => {
     let count = filters.competitions.length + filters.teams.length;
     if (filters.dateFrom) count++;
@@ -209,7 +261,7 @@ const activeFilterCount = computed(() => {
 
 function hasFilterQueryParams() {
     const q = route.query;
-    return !!(q.competitions || q.teams || q.date_from || q.date_to || q.search);
+    return !!(q.competitions || q.teams || q.date_from || q.date_to || q.search || q.show_unavailable);
 }
 
 function readFiltersFromQuery() {
@@ -231,6 +283,7 @@ function readFiltersFromQuery() {
     filters.dateFrom = q.date_from || '';
     filters.dateTo = q.date_to || '';
     searchInput.value = q.search || '';
+    showUnavailable.value = q.show_unavailable === '1';
 }
 
 function syncFiltersToQuery() {
@@ -240,6 +293,7 @@ function syncFiltersToQuery() {
     if (filters.dateFrom) query.date_from = filters.dateFrom;
     if (filters.dateTo) query.date_to = filters.dateTo;
     if (searchInput.value) query.search = searchInput.value;
+    if (showUnavailable.value) query.show_unavailable = '1';
     router.replace({ query });
 }
 
@@ -250,6 +304,7 @@ function buildApiParams() {
     if (filters.dateFrom) params.date_from = filters.dateFrom;
     if (filters.dateTo) params.date_to = filters.dateTo;
     if (searchInput.value) params.search = searchInput.value;
+    if (showUnavailable.value) params.show_unavailable = 1;
     return params;
 }
 
@@ -293,6 +348,7 @@ function clearFilters() {
     filters.dateFrom = '';
     filters.dateTo = '';
     searchInput.value = '';
+    showUnavailable.value = false;
     page.value = 1;
     syncFiltersToQuery();
     fetchProducts();
@@ -302,6 +358,12 @@ function loadMore() {
     page.value++;
     fetchProducts(true);
 }
+
+watch(showUnavailable, () => {
+    page.value = 1;
+    syncFiltersToQuery();
+    fetchProducts();
+});
 
 // Debounced search
 watch(searchInput, () => {

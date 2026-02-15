@@ -23,4 +23,9 @@ class TicketOption extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function ticketCategory(): BelongsTo
+    {
+        return $this->belongsTo(TicketCategory::class, 'ticket_category');
+    }
 }

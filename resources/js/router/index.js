@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { getStatus } from '../api/index.js';
 import LandingPage from '../pages/LandingPage.vue';
 import ProductsPage from '../pages/ProductsPage.vue';
+import ProductDetailPage from '../pages/ProductDetailPage.vue';
 
 const routes = [
     {
@@ -13,6 +14,12 @@ const routes = [
         path: '/products',
         name: 'products',
         component: ProductsPage,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/products/:id',
+        name: 'product',
+        component: ProductDetailPage,
         meta: { requiresAuth: true },
     },
     {

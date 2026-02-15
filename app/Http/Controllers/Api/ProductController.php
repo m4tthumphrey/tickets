@@ -14,7 +14,12 @@ class ProductController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $available = fn ($q) => $q->where('available', true);
+
         $query = Product::with(['venue', 'homeTeam', 'awayTeam', 'competition'])
+            ->withCount(['ticketOptions' => $available])
+            ->withMin(['ticketOptions' => $available], 'price')
+            ->withMax(['ticketOptions' => $available], 'price')
             ->orderBy('starts_at');
 
         if ($request->filled('teams')) {
@@ -35,6 +40,10 @@ class ProductController extends Controller
             $query->whereDate('starts_at', '<=', $request->input('date_to'));
         }
 
+        if (!$request->boolean('show_unavailable')) {
+            $query->has('ticketOptions', '>', 0, 'and', $available);
+        }
+
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where('name', 'like', "%{$search}%");
@@ -43,6 +52,20 @@ class ProductController extends Controller
         $products = $query->paginate(24);
 
         return response()->json($products);
+    }
+
+    public function show(Product $product): JsonResponse
+    {
+        $product->load([
+            'venue',
+            'homeTeam',
+            'awayTeam',
+            'competition',
+            'ticketOptions' => fn ($q) => $q->where('available', true)->orderBy('price'),
+            'ticketOptions.ticketCategory',
+        ]);
+
+        return response()->json($product);
     }
 
     public function filters(): JsonResponse

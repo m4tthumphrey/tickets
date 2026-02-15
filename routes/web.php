@@ -9,6 +9,7 @@ Route::get('/api/access-code/status', [AccessCodeController::class, 'status']);
 Route::post('/api/access-code/logout', [AccessCodeController::class, 'logout']);
 
 Route::get('/api/products', [ProductController::class, 'index']);
+Route::get('/api/products/{product}', [ProductController::class, 'show']);
 Route::get('/api/filters', [ProductController::class, 'filters']);
 
 Route::get('/{any?}', fn () => view('app'))->where('any', '.*');
