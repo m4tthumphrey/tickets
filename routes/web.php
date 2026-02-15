@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\AccessCodeController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::post('/api/access-code/validate', [AccessCodeController::class, 'validate']);
+Route::get('/api/access-code/status', [AccessCodeController::class, 'status']);
+Route::post('/api/access-code/logout', [AccessCodeController::class, 'logout']);
+
+Route::get('/{any?}', fn () => view('app'))->where('any', '.*');
