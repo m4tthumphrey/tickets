@@ -16,6 +16,7 @@ class AccessCode extends Model
         'activated_at',
         'expires_at',
         'is_revoked',
+        'margin',
     ];
 
     protected function casts(): array
@@ -36,6 +37,11 @@ class AccessCode extends Model
     public function logs(): HasMany
     {
         return $this->hasMany(AccessCodeLog::class);
+    }
+
+    public function applyMargin(float $cost): float
+    {
+        return ceil($cost * (1 + $this->margin / 100) / 5) * 5;
     }
 
     public function activate(): void

@@ -111,7 +111,7 @@ class SyncProductsCommand extends Command
                         'ticket_category' => $option['ticket_category'],
                         'name' => $option['name'],
                         'cost' => $option['price'],
-                        'price' => ceil($option['price'] * 1.15 / 5) * 5,
+                        'price' => $option['price'],
                         'available' => $option['available'],
                         'max_purchase_qty' => $option['max_purchase_qty'],
                         'delivery_methods' => json_encode($option['delivery_methods'] ?? null),

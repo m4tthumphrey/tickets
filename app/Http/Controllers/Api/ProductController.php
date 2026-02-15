@@ -18,7 +18,8 @@ class ProductController extends Controller
     public function index(Request $request): JsonResponse
     {
         $available = fn ($q) => $q->where('available', true);
-        $allowedTeamIds = $this->allowedTeamIds($request);
+        $accessCode = $this->getAccessCode($request);
+        $allowedTeamIds = $this->getAllowedTeamIds($accessCode);
 
         $query = Product::with(['venue', 'homeTeam', 'awayTeam', 'competition'])
             ->withCount(['ticketOptions' => $available])
@@ -59,12 +60,17 @@ class ProductController extends Controller
 
         $products = $query->paginate(24);
 
+        if ($accessCode) {
+            $this->applyMarginToProducts($products->getCollection(), $accessCode);
+        }
+
         return response()->json($products);
     }
 
     public function show(Request $request, Product $product): JsonResponse
     {
-        $allowedTeamIds = $this->allowedTeamIds($request);
+        $accessCode = $this->getAccessCode($request);
+        $allowedTeamIds = $this->getAllowedTeamIds($accessCode);
 
         if ($allowedTeamIds !== null && ! $allowedTeamIds->contains($product->home_team_id)) {
             abort(404);
@@ -79,12 +85,18 @@ class ProductController extends Controller
             'ticketOptions.ticketCategory',
         ]);
 
+        if ($accessCode) {
+            foreach ($product->ticketOptions as $option) {
+                $option->price = $accessCode->applyMargin($option->price);
+            }
+        }
+
         return response()->json($product);
     }
 
     public function filters(Request $request): JsonResponse
     {
-        $allowedTeamIds = $this->allowedTeamIds($request);
+        $allowedTeamIds = $this->getAllowedTeamIds($this->getAccessCode($request));
 
         $productQuery = Product::query()
             ->when($allowedTeamIds !== null, fn (Builder $q) => $q->whereIn('home_team_id', $allowedTeamIds));
@@ -103,7 +115,7 @@ class ProductController extends Controller
         ]);
     }
 
-    private function allowedTeamIds(Request $request): ?Collection
+    private function getAccessCode(Request $request): ?AccessCode
     {
         $accessCodeId = $request->session()->get('access_code_id');
 
@@ -111,12 +123,27 @@ class ProductController extends Controller
             return null;
         }
 
-        $accessCode = AccessCode::with('teams')->find($accessCodeId);
+        return AccessCode::with('teams')->find($accessCodeId);
+    }
 
+    private function getAllowedTeamIds(?AccessCode $accessCode): ?Collection
+    {
         if (! $accessCode || $accessCode->teams->isEmpty()) {
             return null;
         }
 
         return $accessCode->teams->pluck('id');
+    }
+
+    private function applyMarginToProducts(Collection $products, AccessCode $accessCode): void
+    {
+        foreach ($products as $product) {
+            if ($product->ticket_options_min_price !== null) {
+                $product->ticket_options_min_price = $accessCode->applyMargin($product->ticket_options_min_price);
+            }
+            if ($product->ticket_options_max_price !== null) {
+                $product->ticket_options_max_price = $accessCode->applyMargin($product->ticket_options_max_price);
+            }
+        }
     }
 }

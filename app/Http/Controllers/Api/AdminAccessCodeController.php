@@ -28,6 +28,7 @@ class AdminAccessCodeController extends Controller
             'code' => 'required|string|max:20|unique:access_codes,code',
             'label' => 'nullable|string|max:255',
             'expires_after' => 'nullable|integer|min:1',
+            'margin' => 'integer|min:0|max:100',
             'default_filters' => 'nullable|array',
             'team_ids' => 'nullable|array',
             'team_ids.*' => 'exists:teams,id',
@@ -37,6 +38,7 @@ class AdminAccessCodeController extends Controller
             'code' => strtoupper(trim($request->input('code'))),
             'label' => $request->input('label'),
             'expires_after' => $request->input('expires_after'),
+            'margin' => $request->input('margin', 15),
             'default_filters' => $request->input('default_filters'),
         ]);
 
@@ -69,12 +71,13 @@ class AdminAccessCodeController extends Controller
             'code' => 'sometimes|string|max:20|unique:access_codes,code,' . $accessCode->id,
             'label' => 'nullable|string|max:255',
             'expires_after' => 'nullable|integer|min:1',
+            'margin' => 'integer|min:0|max:100',
             'default_filters' => 'nullable|array',
             'team_ids' => 'nullable|array',
             'team_ids.*' => 'exists:teams,id',
         ]);
 
-        $accessCode->update($request->only(['code', 'label', 'expires_after', 'default_filters']));
+        $accessCode->update($request->only(['code', 'label', 'expires_after', 'margin', 'default_filters']));
 
         if ($request->has('team_ids')) {
             $accessCode->teams()->sync($request->input('team_ids', []));

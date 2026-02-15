@@ -59,6 +59,18 @@
                     </div>
 
                     <div>
+                        <label class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 block">Margin (%)</label>
+                        <input
+                            v-model.number="form.margin"
+                            type="number"
+                            min="0"
+                            max="100"
+                            class="w-32 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                        <p class="text-xs text-zinc-500 mt-1">Applied to cost price, rounded up to nearest 5.</p>
+                    </div>
+
+                    <div>
                         <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Associated Teams</h3>
                         <p class="text-xs text-zinc-500 mb-2">Teams this access code is linked to (for organizational purposes).</p>
                         <input
@@ -242,6 +254,7 @@ const form = reactive({
     code: '',
     label: '',
     expires_after: null,
+    margin: 15,
     default_filters: { competitions: [], teams: [] },
     team_ids: [],
 });
@@ -314,6 +327,7 @@ function populateForm(ac) {
     form.code = ac.code;
     form.label = ac.label || '';
     form.expires_after = ac.expires_after;
+    form.margin = ac.margin ?? 15;
     form.default_filters = ac.default_filters || { competitions: [], teams: [] };
     form.team_ids = ac.teams?.map(t => t.id) || [];
     neverExpires.value = ac.expires_after === null;
