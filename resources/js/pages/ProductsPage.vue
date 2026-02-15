@@ -73,6 +73,7 @@
                             <table class="w-full text-sm text-left">
                                 <thead class="border-b border-zinc-800 bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
                                     <tr>
+                                        <th class="px-4 py-3 font-medium">ID</th>
                                         <th class="px-4 py-3 font-medium">Date</th>
                                         <th class="px-4 py-3 font-medium">Match</th>
                                         <th class="px-4 py-3 font-medium hidden sm:table-cell">Competition</th>
@@ -84,6 +85,9 @@
                                         :key="product.id"
                                         class="bg-zinc-950 transition hover:bg-zinc-900"
                                     >
+                                        <td class="whitespace-nowrap px-4 py-3 text-zinc-500">
+                                            {{ product.id }}
+                                        </td>
                                         <td class="whitespace-nowrap px-4 py-3 text-zinc-400">
                                             {{ formatDate(product.starts_at) }}
                                         </td>
