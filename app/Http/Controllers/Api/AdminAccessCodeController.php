@@ -77,7 +77,15 @@ class AdminAccessCodeController extends Controller
             'team_ids.*' => 'exists:teams,id',
         ]);
 
-        $accessCode->update($request->only(['code', 'label', 'expires_after', 'margin', 'default_filters']));
+        $data = $request->only(['code', 'label', 'expires_after', 'margin', 'default_filters']);
+
+        if (array_key_exists('expires_after', $data) && $data['expires_after'] === null) {
+            $data['expires_at'] = null;
+        } elseif (array_key_exists('expires_after', $data) && $accessCode->activated_at) {
+            $data['expires_at'] = $accessCode->activated_at->addMinutes($data['expires_after']);
+        }
+
+        $accessCode->update($data);
 
         if ($request->has('team_ids')) {
             $accessCode->teams()->sync($request->input('team_ids', []));

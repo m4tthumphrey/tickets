@@ -55,6 +55,12 @@
                                 />
                                 Never
                             </label>
+                            <span v-if="accessCode.expires_at" class="text-xs text-zinc-500">
+                                Expires: {{ formatDateTime(accessCode.expires_at) }}
+                            </span>
+                            <span v-else-if="accessCode.activated_at" class="text-xs text-zinc-500">
+                                Never expires
+                            </span>
                         </div>
                     </div>
 
