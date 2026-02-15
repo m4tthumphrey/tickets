@@ -11,13 +11,13 @@ const routes = [
         component: LandingPage,
     },
     {
-        path: '/products',
+        path: '/matches',
         name: 'products',
         component: ProductsPage,
         meta: { requiresAuth: true },
     },
     {
-        path: '/products/:id',
+        path: '/matches/:id',
         name: 'product',
         component: ProductDetailPage,
         meta: { requiresAuth: true },
