@@ -86,8 +86,8 @@
                                 <div class="min-w-0 flex-1">
                                     <h3 class="font-medium text-zinc-100">{{ option.name }}</h3>
 
-                                    <p v-if="option.ticket_category?.description" class="mt-1 text-sm text-zinc-400">
-                                        {{ option.ticket_category.description }}
+                                    <p v-if="option.ticket_category?.human_description" class="mt-1 text-sm text-zinc-400">
+                                        {{ option.ticket_category.human_description }}
                                     </p>
 
                                     <!-- Category details -->
