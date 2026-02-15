@@ -9,6 +9,7 @@ class AccessCode extends Model
     protected $fillable = [
         'code',
         'label',
+        'default_filters',
         'expires_after',
         'activated_at',
         'expires_at',
@@ -18,6 +19,7 @@ class AccessCode extends Model
     protected function casts(): array
     {
         return [
+            'default_filters' => 'array',
             'activated_at' => 'datetime',
             'expires_at' => 'datetime',
             'is_revoked' => 'boolean',

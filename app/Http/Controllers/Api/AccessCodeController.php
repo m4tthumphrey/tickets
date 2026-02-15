@@ -61,6 +61,7 @@ class AccessCodeController extends Controller
         return response()->json([
             'authenticated' => true,
             'expires_at' => $accessCode->expires_at->toIso8601String(),
+            'default_filters' => $accessCode->default_filters,
         ]);
     }
 

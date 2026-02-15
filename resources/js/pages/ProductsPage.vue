@@ -38,7 +38,6 @@
                     <FilterPanel
                         :competitions="filterOptions.competitions"
                         :teams="filterOptions.teams"
-                        :venues="filterOptions.venues"
                         :selected="filters"
                         @update:filters="updateFilters"
                         @clear="clearFilters"
@@ -77,7 +76,6 @@
                                         <th class="px-4 py-3 font-medium">Date</th>
                                         <th class="px-4 py-3 font-medium">Match</th>
                                         <th class="px-4 py-3 font-medium hidden sm:table-cell">Competition</th>
-                                        <th class="px-4 py-3 font-medium hidden md:table-cell">Venue</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-zinc-800/50">
@@ -94,9 +92,6 @@
                                         </td>
                                         <td class="whitespace-nowrap px-4 py-3 text-zinc-400 hidden sm:table-cell">
                                             {{ product.competition?.name }}
-                                        </td>
-                                        <td class="whitespace-nowrap px-4 py-3 text-zinc-400 hidden md:table-cell">
-                                            {{ product.venue?.name }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -135,7 +130,6 @@
                         <FilterPanel
                             :competitions="filterOptions.competitions"
                             :teams="filterOptions.teams"
-                            :venues="filterOptions.venues"
                             :selected="filters"
                             @update:filters="updateFilters"
                             @clear="clearFilters"
@@ -150,7 +144,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getProducts, getFilters } from '../api/index.js';
+import { getProducts, getFilters, getStatus } from '../api/index.js';
 import SessionBar from '../components/SessionBar.vue';
 import FilterPanel from '../components/FilterPanel.vue';
 
@@ -166,17 +160,16 @@ const drawerOpen = ref(false);
 const filterOptions = reactive({
     competitions: [],
     teams: [],
-    venues: [],
 });
 
 const filters = reactive({
     competitions: [],
     teams: [],
-    venues: [],
     dateFrom: '',
     dateTo: '',
 });
 
+const defaultFilters = ref(null);
 const searchInput = ref('');
 let searchTimeout = null;
 
@@ -203,18 +196,34 @@ function formatDate(dateStr) {
 }
 
 const activeFilterCount = computed(() => {
-    let count = filters.competitions.length + filters.teams.length + filters.venues.length;
+    let count = filters.competitions.length + filters.teams.length;
     if (filters.dateFrom) count++;
     if (filters.dateTo) count++;
     if (searchInput.value) count++;
     return count;
 });
 
+function hasFilterQueryParams() {
+    const q = route.query;
+    return !!(q.competitions || q.teams || q.date_from || q.date_to || q.search);
+}
+
 function readFiltersFromQuery() {
     const q = route.query;
+
+    if (!hasFilterQueryParams() && defaultFilters.value) {
+        const df = defaultFilters.value;
+        filters.competitions = df.competitions || [];
+        filters.teams = df.teams || [];
+        filters.dateFrom = '';
+        filters.dateTo = '';
+        searchInput.value = '';
+        syncFiltersToQuery();
+        return;
+    }
+
     filters.competitions = q.competitions ? q.competitions.split(',').map(Number) : [];
     filters.teams = q.teams ? q.teams.split(',').map(Number) : [];
-    filters.venues = q.venues ? q.venues.split(',').map(Number) : [];
     filters.dateFrom = q.date_from || '';
     filters.dateTo = q.date_to || '';
     searchInput.value = q.search || '';
@@ -224,7 +233,6 @@ function syncFiltersToQuery() {
     const query = {};
     if (filters.competitions.length) query.competitions = filters.competitions.join(',');
     if (filters.teams.length) query.teams = filters.teams.join(',');
-    if (filters.venues.length) query.venues = filters.venues.join(',');
     if (filters.dateFrom) query.date_from = filters.dateFrom;
     if (filters.dateTo) query.date_to = filters.dateTo;
     if (searchInput.value) query.search = searchInput.value;
@@ -235,7 +243,6 @@ function buildApiParams() {
     const params = { page: page.value };
     if (filters.competitions.length) params.competitions = filters.competitions.join(',');
     if (filters.teams.length) params.teams = filters.teams.join(',');
-    if (filters.venues.length) params.venues = filters.venues.join(',');
     if (filters.dateFrom) params.date_from = filters.dateFrom;
     if (filters.dateTo) params.date_to = filters.dateTo;
     if (searchInput.value) params.search = searchInput.value;
@@ -264,7 +271,6 @@ async function fetchFilterOptions() {
         const { data } = await getFilters();
         filterOptions.competitions = data.competitions;
         filterOptions.teams = data.teams;
-        filterOptions.venues = data.venues;
     } catch {
         // silently fail
     }
@@ -280,7 +286,6 @@ function updateFilters(newFilters) {
 function clearFilters() {
     filters.competitions = [];
     filters.teams = [];
-    filters.venues = [];
     filters.dateFrom = '';
     filters.dateTo = '';
     searchInput.value = '';
@@ -304,7 +309,16 @@ watch(searchInput, () => {
     }, 300);
 });
 
-onMounted(() => {
+onMounted(async () => {
+    try {
+        const { data } = await getStatus();
+        if (data.default_filters) {
+            defaultFilters.value = data.default_filters;
+        }
+    } catch {
+        // ignore - defaults just won't apply
+    }
+
     readFiltersFromQuery();
     fetchFilterOptions();
     fetchProducts();
