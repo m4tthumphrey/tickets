@@ -41,6 +41,10 @@ class AccessCode extends Model
 
     public function applyMargin(float $cost): float
     {
+        if ($this->margin <= 0) {
+            return $cost;
+        }
+
         return ceil($cost * (1 + $this->margin / 100) / 5) * 5;
     }
 

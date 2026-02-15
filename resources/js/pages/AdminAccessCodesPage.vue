@@ -28,7 +28,7 @@
                             <th class="px-4 py-3">Teams</th>
                             <th class="px-4 py-3">Status</th>
                             <th class="px-4 py-3">Created</th>
-                            <th class="px-4 py-3">Expires After</th>
+                            <th class="px-4 py-3">Expires</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-800">
@@ -49,7 +49,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-zinc-400">{{ formatDate(ac.created_at) }}</td>
-                            <td class="px-4 py-3 text-zinc-400">{{ ac.expires_after ? `${ac.expires_after} min` : 'Never' }}</td>
+                            <td class="px-4 py-3 text-zinc-400">{{ expiresDisplay(ac) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -93,10 +93,24 @@ function statusClass(ac) {
     return 'bg-red-900/50 text-red-300';
 }
 
+function expiresDisplay(ac) {
+    if (!ac.expires_after) return 'Never';
+    if (ac.expires_at) return `${formatDateTime(ac.expires_at)} (${ac.expires_after} min)`;
+    return `Not activated (${ac.expires_after} min)`;
+}
+
 function formatDate(dateStr) {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('en-GB', {
         day: 'numeric', month: 'short', year: 'numeric',
+    });
+}
+
+function formatDateTime(dateStr) {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleString('en-GB', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
     });
 }
 
