@@ -38,7 +38,7 @@ class AccessCodeController extends Controller
 
         return response()->json([
             'valid' => true,
-            'expires_at' => $accessCode->expires_at->toIso8601String(),
+            'expires_at' => $accessCode->expires_at?->toIso8601String(),
         ]);
     }
 
@@ -60,7 +60,7 @@ class AccessCodeController extends Controller
 
         return response()->json([
             'authenticated' => true,
-            'expires_at' => $accessCode->expires_at->toIso8601String(),
+            'expires_at' => $accessCode->expires_at?->toIso8601String(),
             'default_filters' => $accessCode->default_filters,
         ]);
     }

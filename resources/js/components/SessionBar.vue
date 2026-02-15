@@ -1,7 +1,7 @@
 <template>
     <div class="sticky top-0 z-50 flex items-center justify-between bg-zinc-900 border-b border-zinc-800 px-4 py-2 text-sm">
-        <span class="font-mono" :class="timeColor">
-            Session expires in {{ formattedTime }}
+        <span class="font-mono" :class="neverExpires ? 'text-zinc-400' : timeColor">
+            {{ neverExpires ? 'Session active' : `Session expires in ${formattedTime}` }}
         </span>
         <button
             @click="handleLogout"
@@ -19,6 +19,7 @@ import { getStatus, logout } from '../api/index.js';
 
 const router = useRouter();
 const secondsRemaining = ref(0);
+const neverExpires = ref(false);
 let timer = null;
 
 const formattedTime = computed(() => {
@@ -63,9 +64,13 @@ onMounted(async () => {
             router.push({ name: 'landing' });
             return;
         }
-        const expiresAt = new Date(data.expires_at);
-        secondsRemaining.value = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-        timer = setInterval(tick, 1000);
+        if (data.expires_at) {
+            const expiresAt = new Date(data.expires_at);
+            secondsRemaining.value = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+            timer = setInterval(tick, 1000);
+        } else {
+            neverExpires.value = true;
+        }
     } catch {
         router.push({ name: 'landing' });
     }

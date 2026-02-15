@@ -34,7 +34,7 @@ class AccessCode extends Model
 
         $this->update([
             'activated_at' => now(),
-            'expires_at' => now()->addMinutes($this->expires_after),
+            'expires_at' => $this->expires_after ? now()->addMinutes($this->expires_after) : null,
         ]);
     }
 
