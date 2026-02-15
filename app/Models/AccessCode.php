@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AccessCode extends Model
 {
@@ -24,6 +26,16 @@ class AccessCode extends Model
             'expires_at' => 'datetime',
             'is_revoked' => 'boolean',
         ];
+    }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class);
+    }
+
+    public function logs(): HasMany
+    {
+        return $this->hasMany(AccessCodeLog::class);
     }
 
     public function activate(): void

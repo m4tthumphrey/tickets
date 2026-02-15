@@ -267,10 +267,13 @@ function hasFilterQueryParams() {
 function readFiltersFromQuery() {
     const q = route.query;
 
+    const validCompetitionIds = new Set(filterOptions.competitions.map(c => c.id));
+    const validTeamIds = new Set(filterOptions.teams.map(t => t.id));
+
     if (!hasFilterQueryParams() && defaultFilters.value) {
         const df = defaultFilters.value;
-        filters.competitions = df.competitions || [];
-        filters.teams = df.teams || [];
+        filters.competitions = (df.competitions || []).filter(id => validCompetitionIds.has(id));
+        filters.teams = (df.teams || []).filter(id => validTeamIds.has(id));
         filters.dateFrom = '';
         filters.dateTo = '';
         searchInput.value = '';
@@ -278,12 +281,14 @@ function readFiltersFromQuery() {
         return;
     }
 
-    filters.competitions = q.competitions ? q.competitions.split(',').map(Number) : [];
-    filters.teams = q.teams ? q.teams.split(',').map(Number) : [];
+    filters.competitions = q.competitions ? q.competitions.split(',').map(Number).filter(id => validCompetitionIds.has(id)) : [];
+    filters.teams = q.teams ? q.teams.split(',').map(Number).filter(id => validTeamIds.has(id)) : [];
     filters.dateFrom = q.date_from || '';
     filters.dateTo = q.date_to || '';
     searchInput.value = q.search || '';
     showUnavailable.value = q.show_unavailable === '1';
+
+    syncFiltersToQuery();
 }
 
 function syncFiltersToQuery() {
@@ -376,17 +381,16 @@ watch(searchInput, () => {
 });
 
 onMounted(async () => {
-    try {
-        const { data } = await getStatus();
-        if (data.default_filters) {
-            defaultFilters.value = data.default_filters;
-        }
-    } catch {
-        // ignore - defaults just won't apply
+    const [statusResult] = await Promise.allSettled([
+        getStatus(),
+        fetchFilterOptions(),
+    ]);
+
+    if (statusResult.status === 'fulfilled' && statusResult.value.data.default_filters) {
+        defaultFilters.value = statusResult.value.data.default_filters;
     }
 
     readFiltersFromQuery();
-    fetchFilterOptions();
     fetchProducts();
 });
 </script>
