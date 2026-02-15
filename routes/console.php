@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::command('tc:sync-teams')->daily();
+Schedule::command('tc:sync-venues')->daily();
+Schedule::command('tc:sync-competitions')->daily();
+Schedule::command('tc:sync-ticket-categories')->daily();
+Schedule::command('tc:sync-products')->everyFifteenMinutes();
