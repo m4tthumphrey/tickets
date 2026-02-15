@@ -18,7 +18,7 @@ class SyncProductsCommand extends Command
 
         $page = 1;
         $pageSize = 100;
-        $synced = 0;
+        $synced = [];
 
         do {
             $response = $client->get('product', [
@@ -64,14 +64,20 @@ class SyncProductsCommand extends Command
                     ],
                 );
 
-                $synced++;
+                $synced[] = $productData['id'];
             }
 
             $this->line("Page {$page} processed (" . count($products) . " products)");
             $page++;
         } while (count($products) === $pageSize);
 
-        $this->info("Synced {$synced} products.");
+        if (count($synced)) {
+            Product::whereNotIn('id', $synced)->delete();
+        }
+
+        $syncCount = count($synced);
+
+        $this->info("Synced {$syncCount} products.");
 
         return self::SUCCESS;
     }

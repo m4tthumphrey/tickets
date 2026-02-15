@@ -57,7 +57,7 @@ async function submit() {
 
     try {
         await validateCode(code.value);
-        router.push({ name: 'holding' });
+        router.push({ name: 'products' });
     } catch (e) {
         error.value = e.response?.data?.error || 'Something went wrong.';
     } finally {
@@ -70,7 +70,7 @@ onMounted(async () => {
     try {
         const { data } = await getStatus();
         if (data.authenticated) {
-            router.push({ name: 'holding' });
+            router.push({ name: 'products' });
             return;
         }
     } catch {

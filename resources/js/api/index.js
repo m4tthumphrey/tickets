@@ -11,3 +11,11 @@ export function getStatus() {
 export function logout() {
     return axios.post('/api/access-code/logout');
 }
+
+export function getProducts(params = {}) {
+    return axios.get('/api/products', { params });
+}
+
+export function getFilters() {
+    return axios.get('/api/filters');
+}

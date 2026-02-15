@@ -35,4 +35,9 @@ class Product extends Model
     {
         return $this->belongsTo(Team::class, 'away_team_id');
     }
+
+    public function competition(): BelongsTo
+    {
+        return $this->belongsTo(Competition::class);
+    }
 }

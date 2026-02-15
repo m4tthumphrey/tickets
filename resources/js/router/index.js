@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { getStatus } from '../api/index.js';
 import LandingPage from '../pages/LandingPage.vue';
-import HoldingPage from '../pages/HoldingPage.vue';
+import ProductsPage from '../pages/ProductsPage.vue';
 
 const routes = [
     {
@@ -10,9 +10,9 @@ const routes = [
         component: LandingPage,
     },
     {
-        path: '/holding',
-        name: 'holding',
-        component: HoldingPage,
+        path: '/products',
+        name: 'products',
+        component: ProductsPage,
         meta: { requiresAuth: true },
     },
     {
