@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Product;
+use App\Models\TicketOption;
 use App\Services\TravelConnection\TravelConnectionClient;
 use Illuminate\Console\Command;
 
@@ -79,6 +80,72 @@ class SyncProductsCommand extends Command
 
         $this->info("Synced {$syncCount} products.");
 
+        $this->syncTicketOptions($client, $synced);
+
         return self::SUCCESS;
+    }
+
+    private function syncTicketOptions(TravelConnectionClient $client, array $productIds): void
+    {
+        $this->info('Syncing ticket options...');
+
+        $syncedByProduct = [];
+
+        foreach (array_chunk($productIds, 100) as $chunk) {
+            $response = $client->post('inventory-status', [
+                'products' => $chunk,
+                'page' => [
+                    'size' => 100,
+                    'number' => 1,
+                ],
+            ]);
+
+            foreach ($response['data'] ?? [] as $product) {
+                $ticketOptions = $product['ticket_options'] ?? [];
+                $rows = [];
+
+                foreach ($ticketOptions as $option) {
+                    $rows[] = [
+                        'id' => $option['id'],
+                        'product_id' => $product['id'],
+                        'ticket_category' => $option['ticket_category'],
+                        'name' => $option['name'],
+                        'price' => $option['price'],
+                        'available' => $option['available'],
+                        'max_purchase_qty' => $option['max_purchase_qty'],
+                        'delivery_methods' => json_encode($option['delivery_methods'] ?? null),
+                    ];
+
+                    $syncedByProduct[$product['id']][] = $option['id'];
+                }
+
+                if ($rows) {
+                    TicketOption::upsert(
+                        $rows,
+                        ['id'],
+                        ['product_id', 'ticket_category', 'name', 'price', 'available', 'max_purchase_qty', 'delivery_methods'],
+                    );
+                }
+            }
+        }
+
+        // Delete stale ticket options
+        $deleted = 0;
+
+        foreach ($syncedByProduct as $productId => $optionIds) {
+            $deleted += TicketOption::where('product_id', $productId)
+                ->whereNotIn('id', $optionIds)
+                ->delete();
+        }
+
+        // Delete all ticket options for products that returned none
+        $productsWithoutOptions = array_diff($productIds, array_keys($syncedByProduct));
+
+        if ($productsWithoutOptions) {
+            $deleted += TicketOption::whereIn('product_id', $productsWithoutOptions)->delete();
+        }
+
+        $optionCount = array_sum(array_map('count', $syncedByProduct));
+        $this->info("Synced {$optionCount} ticket options. Removed {$deleted} stale options.");
     }
 }
