@@ -11,6 +11,12 @@ class TicketCategory extends Model
 
     protected $guarded = [];
 
+    protected $hidden = [
+        'name',
+        'description',
+        'consumer_info'
+    ];
+
     protected function casts(): array
     {
         return [

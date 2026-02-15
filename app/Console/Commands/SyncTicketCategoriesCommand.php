@@ -49,27 +49,35 @@ class SyncTicketCategoriesCommand extends Command
                     continue;
                 }
 
-                $parsed = $this->parseDescription(
-                    $anthropic,
-                    $categoryData['name'] ?? '',
-                    $categoryData['description'] ?? null,
-                    $categoryData['consumer_info'] ?? null,
-                );
+                $existing = TicketCategory::find($categoryData['id']);
+
+                $baseData = [
+                    'product_type' => $categoryData['product_type'] ?? null,
+                    'venue_id' => isset($categoryData['venue']) && $venueIds->has($categoryData['venue'])
+                        ? $categoryData['venue']
+                        : null,
+                    'name' => $categoryData['name'] ?? '',
+                    'description' => $categoryData['description'] ?? null,
+                    'consumer_info' => $categoryData['consumer_info'] ?? null,
+                    'color' => $categoryData['color'] ?? null,
+                    'delivery_methods' => $categoryData['delivery_methods'] ?? null,
+                ];
+
+                $needsParsing = !$existing?->human_description;
+
+                if ($needsParsing) {
+                    $parsed = $this->parseDescription(
+                        $anthropic,
+                        $categoryData['name'] ?? '',
+                        $categoryData['description'] ?? null,
+                        $categoryData['consumer_info'] ?? null,
+                    );
+                    $baseData = [...$baseData, ...$parsed];
+                }
 
                 TicketCategory::updateOrCreate(
                     ['id' => $categoryData['id']],
-                    [
-                        'product_type' => $categoryData['product_type'] ?? null,
-                        'venue_id' => isset($categoryData['venue']) && $venueIds->has($categoryData['venue'])
-                            ? $categoryData['venue']
-                            : null,
-                        'name' => $categoryData['name'] ?? '',
-                        'description' => $categoryData['description'] ?? null,
-                        'consumer_info' => $categoryData['consumer_info'] ?? null,
-                        'color' => $categoryData['color'] ?? null,
-                        'delivery_methods' => $categoryData['delivery_methods'] ?? null,
-                        ...$parsed,
-                    ],
+                    $baseData,
                 );
 
                 $synced++;
@@ -95,6 +103,8 @@ class SyncTicketCategoriesCommand extends Command
         }
 
         $this->line("  Parsing: {$name}");
+
+        usleep(500_000); // 500ms delay to avoid rate limiting
 
         $prompt = <<<PROMPT
         You are parsing a ticket category description from an events/sports ticketing platform. Extract structured information from this description.

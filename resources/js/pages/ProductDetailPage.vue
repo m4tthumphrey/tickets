@@ -84,7 +84,7 @@
                         >
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div class="min-w-0 flex-1">
-                                    <h3 class="font-medium text-zinc-100">{{ option.name }}</h3>
+                                    <h3 class="font-medium text-zinc-100">{{ option.ticket_category?.human_name || option.name }}</h3>
 
                                     <p v-if="option.ticket_category?.human_description" class="mt-1 text-sm text-zinc-400">
                                         {{ option.ticket_category.human_description }}
@@ -106,9 +106,6 @@
                                         </span>
                                         <span v-if="option.ticket_category.has_padded_seats" class="rounded-full bg-zinc-700/50 px-2 py-0.5 text-xs text-zinc-300">
                                             Padded seats
-                                        </span>
-                                        <span v-if="option.ticket_category.seat_location" class="rounded-full bg-zinc-700/50 px-2 py-0.5 text-xs text-zinc-300">
-                                            {{ option.ticket_category.seat_location }}
                                         </span>
                                     </div>
                                 </div>

@@ -33,7 +33,13 @@ class AnthropicClient
         ]);
 
         $body = json_decode($response->getBody()->getContents(), true);
+        $text = $body['content'][0]['text'] ?? '';
 
-        return $body['content'][0]['text'] ?? '';
+        // Strip markdown code fences if present
+        if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $text, $matches)) {
+            return $matches[1];
+        }
+
+        return $text;
     }
 }
